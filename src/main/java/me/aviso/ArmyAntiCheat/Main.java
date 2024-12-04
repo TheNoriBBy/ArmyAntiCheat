@@ -54,9 +54,9 @@ public class Main extends JavaPlugin {
     }
 
     public void registerCommand() {
-        Objects.requireNonNull(this.getCommand("Report")).setExecutor(new ReportCommand());
-        Objects.requireNonNull(this.getCommand("Record")).setExecutor(new RecordCommand());
-        Objects.requireNonNull(this.getCommand("Check")).setExecutor(new CheckCommand(reportSystem));
+        this.getCommand("Report").setExecutor(new ReportCommand());
+        this.getCommand("Record").setExecutor(new RecordCommand());
+        this.getCommand("Check").setExecutor(new CheckCommand(reportSystem));
     }
 
     public static Main getInstance() {

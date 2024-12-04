@@ -26,7 +26,7 @@ public class CheckCommand implements CommandExecutor {
         if (command.getName().equalsIgnoreCase("check")) {
             if (commandSender instanceof Player checker) {
                 Player targetPlayer = Bukkit.getPlayer(strings[0]);
-                if (strings.length != 1 && targetPlayer == null) {
+                if (strings.length == 1 && targetPlayer != null) {
                     UUID targetUUID = targetPlayer.getUniqueId();
                     PlayerReportData reportData = reportSystem.getReportData(targetUUID);
 
