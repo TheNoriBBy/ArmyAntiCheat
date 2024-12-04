@@ -34,6 +34,7 @@ public class Main extends JavaPlugin {
         saveDefaultConfig();
         config = getConfig();
         loadMovements();
+        Bukkit.getLogger().info(String.valueOf(data.realmovements));
     }
 
     @Override

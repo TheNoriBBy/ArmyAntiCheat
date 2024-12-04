@@ -18,10 +18,12 @@ public class MovementPatternAnalyzer {
         double[][] realMovement = convertMovementsToData(data.realmovements);
         double[][] fakeMovement = convertMovementsToData(data.fakemovements);
 
-        boolean isSuspicious = detectAimAssist(movementData, realMovement, fakeMovement);
+        CheatingNotification notification = detectAimAssist(movementData, realMovement, fakeMovement);
 
-        if (isSuspicious) {
-            notifyAdmins(playerUUID);
+        if (notification.isCheating()) {
+            Bukkit.getLogger().info("Cheating detected: " + notification.getMessage());
+        } else {
+            Bukkit.getLogger().info("No cheating detected: " + notification.getMessage());
         }
     }
 
@@ -37,18 +39,23 @@ public class MovementPatternAnalyzer {
         return data;
     }
 
-    private boolean detectAimAssist(double[][] movementData, double[][] realMovement, double[][] fakeMovement) {
+    private CheatingNotification detectAimAssist(double[][] movementData, double[][] realMovement, double[][] fakeMovement) {
         double realSpeed = calcavgspeedbyplayer(realMovement);
         double fakeSpeed = calcavgspeedbyplayer(fakeMovement);
         double playerSpeed = calcavgspeedbyplayer(movementData);
 
         double speedThreshold = (fakeSpeed - realSpeed) * 0.8;
 
-        if (playerSpeed > realSpeed + speedThreshold) {
-            return true;
+        //if (playerSpeed > realSpeed + speedThreshold) {
+        //    return new CheatingNotification(true, "Detected high speed: " + playerSpeed + " exceeds real speed: " + realSpeed);
+        //}
+
+        CheatingNotification patternCheck = analyzeMovementPatterns(movementData, realMovement, fakeMovement);
+        if (patternCheck.isCheating()) {
+            return patternCheck;
         }
 
-        return isFejkMovement(movementData, fakeMovement);
+        return new CheatingNotification(false, "No cheating detected.");
     }
 
     private double calcavgspeedbyplayer(double[][] movements) {
@@ -66,24 +73,32 @@ public class MovementPatternAnalyzer {
         return count > 0 ? totalSpeed / count : 0;
     }
 
-    private boolean isFejkMovement(double[][] movementData, double[][] fakeMovement) {
+    private CheatingNotification analyzeMovementPatterns(double[][] playerMovement, double[][] realMovement, double[][] fakeMovement) {
+        double realAverageSpeed = calcavgspeedbyplayer(realMovement);
         double fakeAverageSpeed = calcavgspeedbyplayer(fakeMovement);
+        double playerAverageSpeed = calcavgspeedbyplayer(playerMovement);
 
-        for (int i = 1; i < movementData.length; i++) {
-            double deltaPitch = Math.abs(movementData[i][0] - movementData[i - 1][0]);
-            double deltaYaw = Math.abs(movementData[i][1] - movementData[i - 1][1]);
+        double speedThreshold = Math.abs(fakeAverageSpeed - realAverageSpeed) * 0.8;
+        double directionChangeThreshold = 15.0;
 
-            double playerSpeed = Math.sqrt(deltaPitch * deltaPitch + deltaYaw * deltaYaw);
+        for (int i = 1; i < playerMovement.length; i++) {
+            double playerDeltaPitch = Math.abs(playerMovement[i][0] - playerMovement[i - 1][0]);
+            double playerDeltaYaw = Math.abs(playerMovement[i][1] - playerMovement[i - 1][1]);
+            double playerSpeed = Math.sqrt(playerDeltaPitch * playerDeltaPitch + playerDeltaYaw * playerDeltaYaw);
 
-            if (playerSpeed > fakeAverageSpeed * 1.2) {
-                return true;
+            //if (playerSpeed > realAverageSpeed + speedThreshold || playerSpeed > fakeAverageSpeed + speedThreshold) {
+            //    return new CheatingNotification(true, "Detected high speed: " + playerSpeed + " exceeds both real: " + realAverageSpeed + " and fake: " + fakeAverageSpeed);
+            //}
+
+            if (playerDeltaPitch > directionChangeThreshold || playerDeltaYaw > directionChangeThreshold) {
+                double realDeltaPitch = Math.abs(realMovement[i][0] - realMovement[i - 1][0]);
+                double realDeltaYaw = Math.abs(realMovement[i][1] - realMovement[i - 1][1]);
+
+                if (playerDeltaPitch > realDeltaPitch * 1.5 || playerDeltaYaw > realDeltaYaw * 1.5) {
+                    return new CheatingNotification(true, "Unnatural direction change detected: Pitch change: " + playerDeltaPitch + ", Yaw change: " + playerDeltaYaw);
+                }
             }
         }
-        return false;
-    }
-
-    private void notifyAdmins(UUID playerUUID) {
-        String playerName = Main.getInstance().getServer().getPlayer(playerUUID).getName();
-        Bukkit.getLogger().info("AntiCheat: Wykryto podejrzany movement u gracza " + playerName);
+        return new CheatingNotification(false, "No cheating detected based on movement patterns.");
     }
 }
