@@ -1,13 +1,15 @@
 package me.aviso.ArmyAntiCheat;
 
-import net.md_5.bungee.api.ChatColor;
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import me.aviso.ArmyAntiCheat.Commands.CheckCommand;
+import me.aviso.ArmyAntiCheat.Commands.RecordCommand;
+import me.aviso.ArmyAntiCheat.Commands.ReportCommand;
+import me.aviso.ArmyAntiCheat.ReportSystem.ReportSystem;
+import me.aviso.ArmyAntiCheat.utils.data;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -21,20 +23,26 @@ import java.util.*;
 public class Main extends JavaPlugin {
 
     private static Main instance;
+    private ReportSystem reportSystem;
+
+    public static Logger logger = LoggerFactory.getLogger(Main.class);
 
     private final Map<Player, Queue<String>> playerMovements = new HashMap<>();
-    private final Map<Player, Boolean> reportingPlayers = new HashMap<>();
+    public final Map<Player, Boolean> reportingPlayers = new HashMap<>();
     private final Map<UUID, List<String>> playerMovementRecords = new HashMap<>();
 
-    private FileConfiguration config;
+    public FileConfiguration config;
 
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
         config = getConfig();
+        registerCommand();
         loadMovements();
-        Bukkit.getLogger().info(String.valueOf(data.realmovements));
+        reportSystem = new ReportSystem();
+
+        //Bukkit.getLogger().info(String.valueOf(data.realmovements));
     }
 
     @Override
@@ -43,6 +51,12 @@ public class Main extends JavaPlugin {
         reportingPlayers.clear();
         playerMovementRecords.clear();
         saveMovements();
+    }
+
+    public void registerCommand() {
+        Objects.requireNonNull(this.getCommand("Report")).setExecutor(new ReportCommand());
+        Objects.requireNonNull(this.getCommand("Record")).setExecutor(new RecordCommand());
+        Objects.requireNonNull(this.getCommand("Check")).setExecutor(new CheckCommand(reportSystem));
     }
 
     public static Main getInstance() {
@@ -65,52 +79,6 @@ public class Main extends JavaPlugin {
         return playerMovementRecords.getOrDefault(playerUUID, Collections.emptyList());
     }
 
-    @Override
-    public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("report")) {
-            if (sender instanceof Player) {
-                Player reporter = (Player) sender;
-                if (args.length != 1) {
-                    reporter.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getString("report-usage", "&aUzycie:&f /report <player>")));
-                    return true;
-                }
-
-                Player reportedPlayer = Bukkit.getPlayer(args[0]);
-                if (reportedPlayer == null) {
-                    reporter.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getString("report-playernotfound", "&cNie ma takiego gracza.")));
-                    return true;
-                }
-
-                if (reportingPlayers.getOrDefault(reportedPlayer, false)) {
-                    reporter.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getString("report-message", "&cAntiCheat: &aGracz zostal zreportowany!")));
-                    return true;
-                }
-
-                reportingPlayers.put(reportedPlayer, true);
-                reporter.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getString("report-message", "&cAntiCheat: &aGracz zostal zreportowany!")));
-
-                new PlayerMovementChecker(reportedPlayer, config.getInt("report-checkingtime", 30)).runTaskTimer(this, 0L, 1L);
-            } else {
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getString("report-nonplayer", "&cTylko gracze moga uzywac tej komendy!")));
-            }
-            return true;
-        } else if (cmd.getName().equalsIgnoreCase("record")) {
-            if (sender instanceof Player) {
-                Player recorder = (Player) sender;
-                if (args.length != 1 || (!args[0].equalsIgnoreCase("real") && !args[0].equalsIgnoreCase("fake"))) {
-                    recorder.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getString("record-usage", "&cUzycie: &f/record <real|fake>")));
-                    return true;
-                }
-
-                String movementType = args[0].toLowerCase();
-                new PlayerMovementRecorder(recorder, movementType, 30).runTaskTimer(this, 0L, 1L);
-            } else {
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getString("record-nonplayer", "&cTylko gracze moga uzywac tej komendy!")));
-            }
-            return true;
-        }
-        return false;
-    }
     private void loadMovements() {
         loadMovementsFromFile(data.realmovements, "realmovements.RAAC");
         loadMovementsFromFile(data.fakemovements, "fakemovements.RAAC");
@@ -125,7 +93,7 @@ public class Main extends JavaPlugin {
                     movements.add(line);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage());
             }
         }
     }
@@ -143,7 +111,7 @@ public class Main extends JavaPlugin {
                 writer.newLine();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 }

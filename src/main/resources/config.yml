@@ -10,3 +10,12 @@ report-nonplayer: "&cTylko gracze moga uzywac tej komendy!"
 # Wiadomosci komendy /record
 record-usage: "&cUzycie: &f/record <real|fake>"
 record-nonplayer: "&cTylko gracze moga uzywac tej komendy!"
+
+# Wiadomosci komendy /check
+check-nonplayer: "&cTylko gracze moga uzywac tej komendy!"
+check-usage: "&cUzycie: /check <player>"
+check-nodata: "&cDane dla tego gracza nie zostaly znalezione"
+
+# MovementPatternAnalyzer
+MPA-Cheat-Notify: "Nienaturalne zachowanie wykryte u gracza (%playerDeltaPitch%, %playerDeltaYaw%)" # Local placeholders: %playerDeltaPitch%, %playerDeltaYaw%
+MPA-NoCheat-Notify: "Podczas sprawdzania gracza nie znaleziono podejrzanych zachowan."
