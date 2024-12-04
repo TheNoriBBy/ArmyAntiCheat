@@ -6,3 +6,7 @@ report-usage: "aUzycie:&f /report <player>"
 report-playernotfound: "&cNie ma takiego gracza."
 report-message: "&cAntiCheat: &aGracz zostal zreportowany!"
 report-nonplayer: "&cTylko gracze moga uzywac tej komendy!"
+
+# Wiadomosci komendy /record
+record-usage: "&cUzycie: &f/record <real|fake>"
+record-nonplayer: "&cTylko gracze moga uzywac tej komendy!"
