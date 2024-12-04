@@ -1,0 +1,8 @@
+# Czas sprawdzania gracza po reporcie
+report-checkingtime: 30
+
+# Wiadomosci komendy /report
+report-usage: "aUzycie:&f /report <player>"
+report-playernotfound: "&cNie ma takiego gracza."
+report-message: "&cAntiCheat: &aGracz zostal zreportowany!"
+report-nonplayer: "&cTylko gracze moga uzywac tej komendy!"

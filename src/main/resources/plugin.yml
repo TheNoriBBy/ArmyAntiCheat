@@ -1,0 +1,10 @@
+name: ArmyAntiCheat
+version: '1.0'
+main: me.aviso.ArmyAntiCheat.Main
+api-version: '1.20'
+load: STARTUP
+authors: [ Ace_Aviso ]
+website: https://github.com/TheNoriBBy
+
+commands:
+  report:
